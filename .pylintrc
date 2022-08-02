@@ -1,0 +1,15 @@
+[MASTER]
+disable=
+    C0114, # missing-module-docstring
+    abstract-method,
+    missing-class-docstring,
+    arguments-renamed,
+    missing-function-docstring,
+    invalid-name,
+    dangerous-default-value,
+    keyword-arg-before-vararg,
+    arguments-differ,
+    trailing-whitespace,
+    import-outside-toplevel
+    logging-fstring-interpolation
+    cell-var-from-loop
