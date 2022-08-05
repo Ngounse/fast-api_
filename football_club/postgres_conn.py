@@ -10,6 +10,8 @@ class FootballClub():
     localhost = "192.168.22.38"
     py_id = None
     sql = """INSERT INTO tb_z1_player(py_name, shirt_number ) VALUES(%s, %s) RETURNING py_id"""
+    sql_delete_query = """Delete from tb_z1_player where py_id = %s"""
+    
     con = None
 
     def InsertNewPlayer(self, py_name, shirt_number):
@@ -95,7 +97,38 @@ class FootballClub():
                 con.close()
                 print("PostgreSQL connection is closed")
 
-py_id = 55
-player_name = input("Enter player name: ")
+    def RemovePlayer(self, py_id, py_name):
+        try:
+            con = psycopg2.connect(host = 'localhost',database = "postgres", user = "mario", password = "admin",)
+            print('connected to database\n')
+        #cursor
+        except Exception as err:
+            print(err)
+            print('error connecting to database\n')
+            exit()
+            
+        try:
+            cur = con.cursor()
+            #execute a query
+            cur.execute(self.sql_delete_query, (py_id,))
+            con.commit() 
+            count = cur.rowcount
+            print(count, "Record deleted successfully ")
+
+        except Exception as err:
+            print(err)
+            print('error executing query\n')
+            exit()
+        finally:
+            # closing database connection.
+            if con:
+                cur.close()
+                con.close()
+                print("PostgreSQL connection is closed")
+
+player_id = input(int("Enter player id : "))
+player_name = input("Enter player name : ")
 shirt_number = random.randint(0,150)
 FootballClub().InsertNewPlayer(player_name, shirt_number)
+FootballClub().UpdatePlayer(player_id, player_name)
+FootballClub().RemovePlayer(player_id,player_name)
