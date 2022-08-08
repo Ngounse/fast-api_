@@ -1,0 +1,32 @@
+{
+  "workbench.colorTheme": "Django",
+  "python.linting.enabled": false,
+  "[python]": {
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": true
+    },
+    "editor.formatOnSave": true
+  },
+  "files.exclude": {
+    "**/.DS_Store": true,
+    "**/.git": true,
+    "**/.hg": true,
+    "**/.svn": true,
+    "**/node_modules": true,
+    "**/__pycache__": true,
+    ".{dev,shadowenv.d,ipython,github}": true
+  },
+  "python.linting.pydocstyleArgs": ["--ignore=D400"],
+  "python.defaultInterpreterPath": "venv/lib/python",
+  "python.linting.pylintEnabled": true,
+  "python.formatting.provider": "black",
+  "cSpell.words": [
+    "basemap",
+    "dataloaders",
+    "geostore",
+    "graphene",
+    "z1datarnd"
+  ],
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestEnabled": true
+}
