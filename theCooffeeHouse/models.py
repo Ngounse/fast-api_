@@ -9,12 +9,12 @@ class UserAuth(Base):
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String(50), nullable=False, unique=True)
     password = Column(String(255), nullable=False)
-    permission = Column(Text)
+    permission = Column(String(15))
     active = Column(Boolean, default=True)
 
     def __repr__(self):
         # return f"<Item name={self.name} price={self.price}>"
-        return f"<Item(name='{self.username}', description='{self.password}', price='{self.permission}', on_offer='{self.active}')>"
+        return f"<Item(username='{self.username}', password='{self.password}', permission='{self.permission}', active='{self.active}')>"
 
 # from models import Item
 # new_item=Item(name="milk", price=2000, description="milk", on_offer=True)
