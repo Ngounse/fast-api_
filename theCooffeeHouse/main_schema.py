@@ -21,7 +21,7 @@ class UserAuth(BaseModel): #serlializer
     username:str
     hashed_password: str
     email: str
-    permission:str
+    permission:str | None = 'user'
     active: bool
 
     class Config:
@@ -78,7 +78,7 @@ def login_user( item :UserLogin):
     print('item=======', item)
     db_email = db.query(models.UserAuth).filter(models.UserAuth.email == item.email).first()
     db_passwd = db.query(models.UserAuth).filter(models.UserAuth.hashed_password == item.hashed_password).first()
-    
+
     print(db_email, 'db_user ::: ')
     print(db_passwd, 'db_passwd ::: ')
     if db_email is None:
@@ -99,10 +99,11 @@ def create_an_user(user: UserAuth):
 
     if db_item is not None:
         raise HTTPException(status_code=400,detail="User or Email already exists.")
+    hashed_password = get_password_hash(user.hashed_password)
 
     new_user = models.UserAuth(
         username= user.username,
-        hashed_password= user.hashed_password,
+        hashed_password= hashed_password,
         email= user.email,
         permission= user.permission,
         active= user.active
@@ -114,26 +115,29 @@ def create_an_user(user: UserAuth):
 
     return new_user
 
-# @app.put('/item/{item_id}',response_model=Item,status_code=status.HTTP_200_OK)
-# def update_an_item(item_id:int,item:Item):
-#     item_to_update=db.query(models.Item).filter(models.Item.id==item_id).first()
-#     item_to_update.name=item.name
-#     item_to_update.price=item.price
-#     item_to_update.description=item.description
-#     item_to_update.on_offer=item.on_offer
+@app.put('/update-user/{username}',response_model=UserAuth,status_code=status.HTTP_200_OK)
+def update_user(username:str,item:UserAuth):
+    user_to_update=db.query(models.UserAuth).filter(models.UserAuth.username==username).first()
+    if user_to_update is None:
+        raise HTTPException(status_code=404,detail="User not found.")
+    user_to_update.username=item.username
+    user_to_update.hashed_password=get_password_hash(item.hashed_password)
+    user_to_update.email=item.email
+    user_to_update.permission=item.permission
+    user_to_update.active=item.active
 
-#     db.commit()
+    db.commit()
 
-#     return item_to_update
+    return user_to_update
 
-# @app.delete("/item/{item_id}")
-# def delete_an_item(item_id:int):
-#     item_to_delete=db.query(models.Item).filter(models.Item.id==item_id).first()
-    
-#     if item_to_delete is None:
-#         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item not found")
-    
-#     db.delete(item_to_delete)
-#     db.commit()
-    
-#     return item_to_delete
+@app.delete("/delete-user/{username}")
+def delete_an_item(username:str):
+    item_to_delete=db.query(models.UserAuth).filter(models.UserAuth.username==username).first()
+
+    if item_to_delete is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found.")
+
+    db.delete(item_to_delete)
+    db.commit()
+
+    return item_to_delete
