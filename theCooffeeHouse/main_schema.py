@@ -59,13 +59,23 @@ class Token(BaseModel):
     access_token: str
     token_type: str
 
-def authenticate_user(fake_db, username: str, password: str):
-    user = get_user(fake_db, username)
+def authenticate_user(db, username: str, password: str):
+    user = get_user(db, username)
     if not user:
         return False
     if not verify_password(password, user.hashed_password):
         return False
     return user
+
+def create_access_token(data: dict, expires_delta: timedelta | None = None):
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(minutes=15)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
 
 @app.get("/user", response_model=List[UserAuth], status_code=200)
 def get_all_user():
@@ -74,26 +84,34 @@ def get_all_user():
     return items
 
 @app.post("/login-user/",response_model=UserLogin, status_code=status.HTTP_200_OK)
-def login_user( item :UserLogin):
+async def login_user( item :UserLogin):
     print('item=======', item)
-    db_email = db.query(models.UserAuth).filter(models.UserAuth.email == item.email).first()
-    db_passwd = db.query(models.UserAuth).filter(models.UserAuth.hashed_password == item.hashed_password).first()
+    db_item = db.query(models.UserAuth).filter(models.UserAuth.email == item.email).first()
 
-    print(db_email, 'db_user ::: ')
-    print(db_passwd, 'db_passwd ::: ')
-    if db_email is None:
+    info_user = models.UserAuth(
+        email= item.email,
+        hashed_password= item.hashed_password,
+    )
+    print(info_user, 'info_user ::: ')
+    if db_item is None:
         raise HTTPException(status_code=400,detail="Email does not exists.")
 
-    if db_passwd is None:
+    if not verify_password(item.hashed_password, db_item.hashed_password):
         raise HTTPException(status_code=400,detail="Incorrect password.")
 
-    # items = db.query(models.UserAuth).all()
-    secret_key = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
-    
-    raise HTTPException(status_code=200,detail=secret_key)
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    print('access_token_expires =====', access_token_expires)
+    access_token = create_access_token(
+        data={"sub": db_item.username}, expires_delta=access_token_expires
+    )
+    print('access_token ====', access_token)
+
+    raise HTTPException(status_code=200,detail=access_token)
+    return {"access_token": access_token, "token_type": "bearer"}
+
 
 @app.post("/create-user", response_model=UserAuth, status_code=status.HTTP_201_CREATED)
-def create_an_user(user: UserAuth):
+def create_a_user(user: UserAuth):
     db_item = db.query(models.UserAuth).filter(models.UserAuth.username == user.username).first()
     db_item = db.query(models.UserAuth).filter(models.UserAuth.email == user.email).first()
 
@@ -108,7 +126,6 @@ def create_an_user(user: UserAuth):
         permission= user.permission,
         active= user.active
     )
-    
 
     db.add(new_user)
     db.commit()
@@ -120,9 +137,9 @@ def update_user(username:str,item:UserAuth):
     user_to_update=db.query(models.UserAuth).filter(models.UserAuth.username==username).first()
     if user_to_update is None:
         raise HTTPException(status_code=404,detail="User not found.")
-    user_to_update.username=item.username
+    # user_to_update.username=item.username
     user_to_update.hashed_password=get_password_hash(item.hashed_password)
-    user_to_update.email=item.email
+    # user_to_update.email=item.email
     user_to_update.permission=item.permission
     user_to_update.active=item.active
 
@@ -131,7 +148,7 @@ def update_user(username:str,item:UserAuth):
     return user_to_update
 
 @app.delete("/delete-user/{username}")
-def delete_an_item(username:str):
+def delete_a_user(username:str):
     item_to_delete=db.query(models.UserAuth).filter(models.UserAuth.username==username).first()
 
     if item_to_delete is None:
