@@ -242,4 +242,5 @@ def delete_product(pro_id:str):
     db.delete(item_to_delete)
     db.commit()
 
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product deleted.")
     return item_to_delete
