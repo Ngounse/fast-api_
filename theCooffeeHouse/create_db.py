@@ -1,5 +1,5 @@
 from database import Base, engine
-from models import UserAuth
+from models import ProductItem, UserAuth
 
 print("Crating database ... ")
 

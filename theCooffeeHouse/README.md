@@ -7,6 +7,6 @@ pip install -r requirements.txt
 export MONGODB_URL="mongodb+srv://<username>:<password>@<url>/<db>?retryWrites=true&w=majority"
 
 # Start the service:
-# cd fastApi_\&_SQLlAlchemy_\&_postgresSQL/
+# cd theCooffeeHouse
 # uvicorn main_schema:app --reload
 ```
