@@ -94,7 +94,7 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
     return encoded_jwt
 
 @app.get("/user", response_model=List[UserAuth], status_code=200)
-def get_all_user():
+async def get_all_user(token: str = Depends(oauth2_scheme)):
     items = db.query(models.UserAuth).all()
 
     return items
@@ -149,7 +149,7 @@ def create_a_user(user: UserAuth):
     return new_user
 
 @app.put('/user-update/{username}',response_model=UserAuth,status_code=status.HTTP_200_OK)
-def update_user(username:str,item:UserAuth):
+async def update_user(username:str,item:UserAuth, token: str = Depends(oauth2_scheme)):
     user_to_update=db.query(models.UserAuth).filter(models.UserAuth.username==username).first()
     if user_to_update is None:
         raise HTTPException(status_code=404,detail="User not found.")
@@ -164,7 +164,7 @@ def update_user(username:str,item:UserAuth):
     return user_to_update
 
 @app.delete("/user-delete/{username}")
-def delete_a_user(username:str):
+async def delete_a_user(username:str, token: str = Depends(oauth2_scheme)):
     item_to_delete=db.query(models.UserAuth).filter(models.UserAuth.username==username).first()
 
     if item_to_delete is None:
@@ -198,7 +198,7 @@ def get_all_product():
     return items
 
 @app.post("/item", response_model=ProductItem, status_code=status.HTTP_201_CREATED)
-def create_product(item: ProductItem):
+async def create_product(item: ProductItem, token: str = Depends(oauth2_scheme)):
 
     new_item = models.ProductItem(
         pro_name= item.pro_name,
@@ -216,7 +216,7 @@ def create_product(item: ProductItem):
     return new_item
 
 @app.put('/item/{pro_id}',response_model=ProductItem,status_code=status.HTTP_200_OK)
-def update_product(pro_id:str,item:ProductItem):
+async def update_product(pro_id:str,item:ProductItem, token: str = Depends(oauth2_scheme)):
     item_to_update=db.query(models.ProductItem).filter(models.ProductItem.id==pro_id).first()
     if item_to_update is None:
         raise HTTPException(status_code=404,detail="Product not found.")
@@ -233,7 +233,7 @@ def update_product(pro_id:str,item:ProductItem):
     return item_to_update
 
 @app.delete("/item/{pro_id}")
-def delete_product(pro_id:str):
+async def delete_product(pro_id:str, token: str = Depends(oauth2_scheme)):
     item_to_delete=db.query(models.ProductItem).filter(models.ProductItem.id==pro_id).first()
 
     if item_to_delete is None:
@@ -244,3 +244,12 @@ def delete_product(pro_id:str):
 
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product deleted.")
     return item_to_delete
+
+
+@app.post('/token')
+async def token(form_data: OAuth2PasswordRequestForm = Depends()):
+    return {'access_token' : form_data.username + 'token'}
+
+@app.get('/')
+async def index(token: str = Depends(oauth2_scheme)):
+    return {'the_token' : token}
