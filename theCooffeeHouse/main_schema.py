@@ -3,6 +3,7 @@ from typing import List, Optional
 
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
 from passlib.context import CryptContext
@@ -109,7 +110,7 @@ async def get_all_user(token: str = Depends(oauth2_scheme)):
 
     return items
 
-@app.post("/user-login/",response_model=UserLogin, status_code=status.HTTP_200_OK)
+@app.post("/user-login/", status_code=status.HTTP_200_OK)
 async def login_user( item :UserLogin):
     print('item=======', item)
     db_item = db.query(models.UserAuth).filter(models.UserAuth.email == item.email).first()
@@ -128,12 +129,12 @@ async def login_user( item :UserLogin):
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     print('access_token_expires =====', access_token_expires)
     access_token = create_access_token(
-        data={"sub": db_item.username}, expires_delta=access_token_expires
+        data={"name": db_item.username, "permission": db_item.permission,"active": db_item.active, }, expires_delta=access_token_expires
     )
     print('access_token ====', access_token)
-
-    raise HTTPException(status_code=200,detail=access_token)
-    return {"access_token": access_token, "token_type": "bearer"}
+    
+    # raise HTTPException(status_code=200,detail=access_token)
+    return JSONResponse(content={"access_token": access_token, "token_type": "bea326rer"}) 
 
 
 @app.post("/user-create", response_model=UserAuth, status_code=status.HTTP_201_CREATED)
@@ -208,7 +209,8 @@ def get_all_product():
     return items
 
 @app.post("/item", response_model=ProductItem, status_code=status.HTTP_201_CREATED)
-async def create_product(item: ProductItem, token: str = Depends(oauth2_scheme)):
+async def create_product(item: ProductItem):
+     
 
     new_item = models.ProductItem(
         pro_name= item.pro_name,
@@ -252,6 +254,6 @@ async def delete_product(pro_id:str, token: str = Depends(oauth2_scheme)):
     db.delete(item_to_delete)
     db.commit()
 
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product deleted.")
-    return item_to_delete
+    raise HTTPException(status_code=status.HTTP_200_OK, detail="Product deleted.")
+    return 
 
