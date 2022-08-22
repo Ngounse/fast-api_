@@ -1,7 +1,7 @@
+### Install the requirements:
 
 ```bash
-# Install the requirements:
-pip install -r requirements.txt
+# pip install -r requirements.txt
 
 # Configure the location of your MongoDB database:
 export MONGODB_URL="mongodb+srv://<username>:<password>@<url>/<db>?retryWrites=true&w=majority"
@@ -9,4 +9,9 @@ export MONGODB_URL="mongodb+srv://<username>:<password>@<url>/<db>?retryWrites=t
 # Start the service:
 # cd theCooffeeHouse
 # uvicorn main_schema:app --reload
+```
+
+### Alternative API docs
+```base
+# http://127.0.0.1:8000/redoc
 ```
