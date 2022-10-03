@@ -1,6 +1,6 @@
 from sqlalchemy import Boolean, Column, Float, ForeignKey, Integer, String
 
-from database import Base
+from .database import Base
 
 
 class UserAuth(Base):
