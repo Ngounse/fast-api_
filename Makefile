@@ -1,8 +1,11 @@
-build_:
-	docker-compose build
+build:
+	@docker-compose build $(filter-out $@,$(MAKECMDGOALS))
 
-up_:
-	docker-compose up
+up:
+	@docker-compose up $(filter-out $@,$(MAKECMDGOALS))
 
-down_:
-	docker-compose down
+down:
+	@docker-compose down $(filter-out $@,$(MAKECMDGOALS))
+
+logs:
+	docker-compose logs -f
