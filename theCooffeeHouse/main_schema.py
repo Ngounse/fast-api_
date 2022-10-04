@@ -11,8 +11,8 @@ from passlib.context import CryptContext
 from pydantic import BaseModel
 
 from .database import SessionLocal
-from .models import ProductItem as modelsProdu
-from .models import UserAuth as modelsUser
+from .models import ProductItem as modelsProductItem
+from .models import UserAuth as modelsUserAuth
 
 app = FastAPI()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
@@ -108,16 +108,16 @@ async def index(token: str = Depends(oauth2_scheme)):
 
 @app.get("/user", response_model=List[UserAuth], status_code=200)
 async def get_all_user(token: str = Depends(oauth2_scheme)):
-    items = db.query(modelsUser.UserAuth).all()
+    items = db.query(modelsUserAuth).all()
 
     return items
 
 @app.post("/user-login/", status_code=status.HTTP_200_OK)
 async def login_user( item :UserLogin):
     print('item=======', item)
-    db_item = db.query(modelsUser.UserAuth).filter(modelsUser.UserAuth.email == item.email).first()
+    db_item = db.query(modelsUserAuth).filter(modelsUserAuth.email == item.email).first()
 
-    info_user = modelsUser.UserAuth(
+    info_user = modelsUserAuth(
         email= item.email,
         hashed_password= item.hashed_password,
     )
@@ -141,14 +141,14 @@ async def login_user( item :UserLogin):
 
 @app.post("/user-create", response_model=UserAuth, status_code=status.HTTP_201_CREATED)
 def create_a_user(user: UserAuth):
-    db_item = db.query(modelsUser.UserAuth).filter(modelsUser.UserAuth.username == user.username).first()
-    db_item = db.query(modelsUser.UserAuth).filter(modelsUser.UserAuth.email == user.email).first()
+    db_item = db.query(modelsUserAuth).filter(modelsUserAuth.username == user.username).first()
+    db_item = db.query(modelsUserAuth).filter(modelsUserAuth.email == user.email).first()
 
     if db_item is not None:
         raise HTTPException(status_code=400,detail="User or Email already exists.")
     hashed_password = get_password_hash(user.hashed_password)
 
-    new_user = modelsUser.UserAuth(
+    new_user = modelsUserAuth(
         username= user.username,
         hashed_password= hashed_password,
         email= user.email,
@@ -163,7 +163,7 @@ def create_a_user(user: UserAuth):
 
 @app.put('/user-update/{username}',response_model=UserAuth,status_code=status.HTTP_200_OK)
 async def update_user(username:str,item:UserAuth, token: str = Depends(oauth2_scheme)):
-    user_to_update=db.query(modelsUser.UserAuth).filter(modelsUser.UserAuth.username==username).first()
+    user_to_update=db.query(modelsUserAuth).filter(modelsUserAuth.username==username).first()
     if user_to_update is None:
         raise HTTPException(status_code=404,detail="User not found.")
     # user_to_update.username=item.username
@@ -178,7 +178,7 @@ async def update_user(username:str,item:UserAuth, token: str = Depends(oauth2_sc
 
 @app.delete("/user-delete/{username}")
 async def delete_a_user(username:str, token: str = Depends(oauth2_scheme)):
-    item_to_delete=db.query(modelsUser.UserAuth).filter(modelsUser.UserAuth.username==username).first()
+    item_to_delete=db.query(modelsUserAuth).filter(modelsUserAuth.username==username).first()
 
     if item_to_delete is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found.")
@@ -206,7 +206,7 @@ class ProductItem(BaseModel): #serlializer
 
 @app.get("/item", response_model=List[ProductItem], status_code=200)
 def get_all_product():
-    items = db.query(modelsProdu.ProductItem).all()
+    items = db.query(modelsProductItem).all()
 
     return items
 
@@ -214,7 +214,7 @@ def get_all_product():
 async def create_product(item: ProductItem):
      
 
-    new_item = modelsProdu.ProductItem(
+    new_item = modelsProductItem(
         pro_name= item.pro_name,
         pro_price= item.pro_price,
         pro_type= item.pro_type,
@@ -231,7 +231,7 @@ async def create_product(item: ProductItem):
 
 @app.put('/item/{pro_id}',response_model=ProductItem,status_code=status.HTTP_200_OK)
 async def update_product(pro_id:str,item:ProductItem, token: str = Depends(oauth2_scheme)):
-    item_to_update=db.query(modelsProdu.ProductItem).filter(modelsProdu.ProductItem.id==pro_id).first()
+    item_to_update=db.query(modelsProductItem).filter(modelsProductItem.id==pro_id).first()
     if item_to_update is None:
         raise HTTPException(status_code=404,detail="Product not found.")
     item_to_update.pro_name=item.pro_name
@@ -248,7 +248,7 @@ async def update_product(pro_id:str,item:ProductItem, token: str = Depends(oauth
 
 @app.delete("/item/{pro_id}")
 async def delete_product(pro_id:str, token: str = Depends(oauth2_scheme)):
-    item_to_delete=db.query(modelsProdu.ProductItem).filter(modelsProdu.ProductItem.id==pro_id).first()
+    item_to_delete=db.query(modelsProductItem).filter(modelsProductItem.id==pro_id).first()
 
     if item_to_delete is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found.")
