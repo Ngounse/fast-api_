@@ -1,6 +1,7 @@
 from datetime import datetime, time, timedelta
 from typing import List, Optional
 
+import uvicorn
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -9,9 +10,11 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 from pydantic import BaseModel
 
-import models
-from database import SessionLocal
+from . import models
+from .database import SessionLocal, engine
+from .schema import UserAuth
 
+models.Base.metadata.create_all(bind=engine)
 app = FastAPI()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 SECRET_KEY = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
@@ -33,16 +36,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-class UserAuth(BaseModel): #serlializer 
-    id:int
-    username:str
-    hashed_password: str
-    email: str
-    permission:str | None = 'user'
-    active: bool
-
-    class Config:
-        orm_mode = True #to use sqlalchemy
+def db():
+    try:
+        db = SessionLocal()
+        yield db
+    finally:
+        db.close()
 
 class UserLogin(BaseModel): #serlializer 
     email:str
@@ -105,7 +104,7 @@ async def index(token: str = Depends(oauth2_scheme)):
 
 
 @app.get("/user", response_model=List[UserAuth], status_code=200)
-async def get_all_user(token: str = Depends(oauth2_scheme)):
+async def get_all_user():
     items = db.query(models.UserAuth).all()
 
     return items
@@ -257,3 +256,24 @@ async def delete_product(pro_id:str, token: str = Depends(oauth2_scheme)):
     raise HTTPException(status_code=status.HTTP_200_OK, detail="Product deleted.")
     return 
 
+
+@app.get("/demo", )
+def demo():
+    return { "message": "hello world"}
+
+@app.get("/demo1", )
+def demo_one():
+    return { "message": "hello world"}
+
+if __name__ == "__main__":
+    uvicorn.run("main:app", port=8000, reload=True)
+
+
+@app.get("/demopy")
+def demo_py():
+    data = {
+        'dat4a' : 'pyt4est',
+        'dat5a' : 'pyt5est',
+        'dat6a' : 'pyt6est',
+    }
+    return { 'data': 'pytest' , 'dat2a': 'pyt2est', 'dat3a': 'pyt3est', 'dat9' : data}

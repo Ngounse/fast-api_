@@ -1,0 +1,31 @@
+version: '3.1'
+
+volumes:
+  postgres_data:
+services:
+  the-coffee-api:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+      args:
+        BUILD_ENVIRONMENT: local
+    command: uvicorn theCooffeeHouse.main_schema:app --host 0.0.0.0 --port 8000 --reload
+    image: the_coffee_local_fastapi
+    container_name: the_coffee_local
+    volumes:
+      - .:/usr/src/personalised_nudges
+    ports:
+      - 8000:8000
+    depends_on:
+      - db
+
+  db:
+    image: postgres:12.0-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=mario
+      - POSTGRES_PASSWORD=admin
+      - POSTGRES_DB=item_db
+    expose: 
+      - 5432
