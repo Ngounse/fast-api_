@@ -4,7 +4,7 @@ from .database import Base
 
 
 class UserAuth(Base):
-    __tablename__ = "userAuth"
+    __tablename__ = "UserAuth"
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String(50), nullable=False, unique=True)
     hashed_password = Column(String(255), nullable=False)
@@ -19,7 +19,7 @@ class UserAuth(Base):
 # new_item=Item(name="milk", price=2000, description="milk", on_offer=True)
 
 class ProductItem(Base):
-    __tablename__ = "productItem"
+    __tablename__ = "ProductItem"
     id = Column(Integer, primary_key=True, index=True)
     pro_name = Column(String(50), nullable=False)
     pro_price = Column(Float(20), nullable=False)

@@ -10,10 +10,11 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 from pydantic import BaseModel
 
-from .database import SessionLocal
-from .models import ProductItem as modelsProductItem
-from .models import UserAuth as modelsUserAuth
+from . import models
+from .database import SessionLocal, engine
+from .schema import UserAuth
 
+models.Base.metadata.create_all(bind=engine)
 app = FastAPI()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 SECRET_KEY = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
@@ -35,16 +36,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-class UserAuth(BaseModel): #serlializer 
-    id:int
-    username:str
-    hashed_password: str
-    email: str | None = '@gmail.com'
-    permission:str | None = 'user'
-    active: bool
-
-    class Config:
-        orm_mode = True #to use sqlalchemy
+def db():
+    try:
+        db = SessionLocal()
+        yield db
+    finally:
+        db.close()
 
 class UserLogin(BaseModel): #serlializer 
     email:str
@@ -107,17 +104,17 @@ async def index(token: str = Depends(oauth2_scheme)):
 
 
 @app.get("/user", response_model=List[UserAuth], status_code=200)
-async def get_all_user(token: str = Depends(oauth2_scheme)):
-    items = db.query(modelsUserAuth).all()
+async def get_all_user():
+    items = db.query(models.UserAuth).all()
 
     return items
 
 @app.post("/user-login/", status_code=status.HTTP_200_OK)
 async def login_user( item :UserLogin):
     print('item=======', item)
-    db_item = db.query(modelsUserAuth).filter(modelsUserAuth.email == item.email).first()
+    db_item = db.query(models.UserAuth).filter(models.UserAuth.email == item.email).first()
 
-    info_user = modelsUserAuth(
+    info_user = models.UserAuth(
         email= item.email,
         hashed_password= item.hashed_password,
     )
@@ -141,14 +138,14 @@ async def login_user( item :UserLogin):
 
 @app.post("/user-create", response_model=UserAuth, status_code=status.HTTP_201_CREATED)
 def create_a_user(user: UserAuth):
-    db_item = db.query(modelsUserAuth).filter(modelsUserAuth.username == user.username).first()
-    db_item = db.query(modelsUserAuth).filter(modelsUserAuth.email == user.email).first()
+    db_item = db.query(models.UserAuth).filter(models.UserAuth.username == user.username).first()
+    db_item = db.query(models.UserAuth).filter(models.UserAuth.email == user.email).first()
 
     if db_item is not None:
         raise HTTPException(status_code=400,detail="User or Email already exists.")
     hashed_password = get_password_hash(user.hashed_password)
 
-    new_user = modelsUserAuth(
+    new_user = models.UserAuth(
         username= user.username,
         hashed_password= hashed_password,
         email= user.email,
@@ -163,7 +160,7 @@ def create_a_user(user: UserAuth):
 
 @app.put('/user-update/{username}',response_model=UserAuth,status_code=status.HTTP_200_OK)
 async def update_user(username:str,item:UserAuth, token: str = Depends(oauth2_scheme)):
-    user_to_update=db.query(modelsUserAuth).filter(modelsUserAuth.username==username).first()
+    user_to_update=db.query(models.UserAuth).filter(models.UserAuth.username==username).first()
     if user_to_update is None:
         raise HTTPException(status_code=404,detail="User not found.")
     # user_to_update.username=item.username
@@ -178,7 +175,7 @@ async def update_user(username:str,item:UserAuth, token: str = Depends(oauth2_sc
 
 @app.delete("/user-delete/{username}")
 async def delete_a_user(username:str, token: str = Depends(oauth2_scheme)):
-    item_to_delete=db.query(modelsUserAuth).filter(modelsUserAuth.username==username).first()
+    item_to_delete=db.query(models.UserAuth).filter(models.UserAuth.username==username).first()
 
     if item_to_delete is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found.")
@@ -206,7 +203,7 @@ class ProductItem(BaseModel): #serlializer
 
 @app.get("/item", response_model=List[ProductItem], status_code=200)
 def get_all_product():
-    items = db.query(modelsProductItem).all()
+    items = db.query(models.ProductItem).all()
 
     return items
 
@@ -214,7 +211,7 @@ def get_all_product():
 async def create_product(item: ProductItem):
      
 
-    new_item = modelsProductItem(
+    new_item = models.ProductItem(
         pro_name= item.pro_name,
         pro_price= item.pro_price,
         pro_type= item.pro_type,
@@ -231,7 +228,7 @@ async def create_product(item: ProductItem):
 
 @app.put('/item/{pro_id}',response_model=ProductItem,status_code=status.HTTP_200_OK)
 async def update_product(pro_id:str,item:ProductItem, token: str = Depends(oauth2_scheme)):
-    item_to_update=db.query(modelsProductItem).filter(modelsProductItem.id==pro_id).first()
+    item_to_update=db.query(models.ProductItem).filter(models.ProductItem.id==pro_id).first()
     if item_to_update is None:
         raise HTTPException(status_code=404,detail="Product not found.")
     item_to_update.pro_name=item.pro_name
@@ -248,7 +245,7 @@ async def update_product(pro_id:str,item:ProductItem, token: str = Depends(oauth
 
 @app.delete("/item/{pro_id}")
 async def delete_product(pro_id:str, token: str = Depends(oauth2_scheme)):
-    item_to_delete=db.query(modelsProductItem).filter(modelsProductItem.id==pro_id).first()
+    item_to_delete=db.query(models.ProductItem).filter(models.ProductItem.id==pro_id).first()
 
     if item_to_delete is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found.")
@@ -270,3 +267,13 @@ def demo_one():
 
 if __name__ == "__main__":
     uvicorn.run("main:app", port=8000, reload=True)
+
+
+@app.get("/demopy")
+def demo_py():
+    data = {
+        'dat4a' : 'pyt4est',
+        'dat5a' : 'pyt5est',
+        'dat6a' : 'pyt6est',
+    }
+    return { 'data': 'pytest' , 'dat2a': 'pyt2est', 'dat3a': 'pyt3est', 'dat9' : data}

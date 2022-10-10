@@ -16,4 +16,4 @@ COPY ./theCooffeeHouse /app/theCooffeeHouse
 
 EXPOSE 8000
 
-CMD ["uvicorn", "theCooffeeHouse.main_schema:app", "--host=0.0.0.0", "--reload"]
+# CMD ["uvicorn", "theCooffeeHouse.main_schema:app", "--host=0.0.0.0", "--reload"]

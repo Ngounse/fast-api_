@@ -1,11 +1,9 @@
-from sqlalchemy.orm import declarative_base
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import declarative_base, sessionmaker
 
 ## // username:password
-engine = create_engine("postgresql://mario:admin@localhost:5432/item_db", echo=True)
-
+engine = create_engine("postgresql://mario:admin@db:5432/item_db")
 Base = declarative_base()
-
-# to bind pur engine
 SessionLocal = sessionmaker(bind=engine)
+# to bind pur engine
+# SessionLocal = sessionmaker(bind=engine)

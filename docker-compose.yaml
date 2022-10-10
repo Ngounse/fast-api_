@@ -1,8 +1,7 @@
 version: '3.1'
 
 volumes:
-  postgres-db-volume:
-
+  postgres_data:
 services:
   the-coffee-api:
     build:
@@ -10,31 +9,23 @@ services:
       dockerfile: ./Dockerfile
       args:
         BUILD_ENVIRONMENT: local
+    command: uvicorn theCooffeeHouse.main_schema:app --host 0.0.0.0 --port 8000 --reload
     image: the_coffee_local_fastapi
     container_name: the_coffee_local
-    # platform: linux/amd64
     volumes:
-      - .:/app:z
-    env_file:
-      - ./.env
+      - .:/usr/src/personalised_nudges
     ports:
-      - "8000:8000"
-    command: uvicorn theCooffeeHouse.main_schema:app --host 0.0.0.0 --reload
-  postgres:
-    image: postgres:13
-    # networks:
-    #   - default_net
-    environment:
-      POSTGRES_USER: mario
-      POSTGRES_PASSWORD: 1234
-      POSTGRES_DB: db_item
+      - 8000:8000
+    depends_on:
+      - db
+
+  db:
+    image: postgres:12.0-alpine
     volumes:
-      - postgres-db-volume:/var/lib/postgresql/data
-      #- ./docker-airflow/pg-init-scripts:/docker-entrypoint-initdb.d
-    # healthcheck:
-    #   # test: ["CMD", "pg_isready", "-U", "airflow"]
-    #   interval: 5s
-    #   retries: 5
-    # restart: always
-    # extra_hosts:
-    #   - 'docker.host.internal:172.17.0.1'   
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=mario
+      - POSTGRES_PASSWORD=admin
+      - POSTGRES_DB=item_db
+    expose: 
+      - 5432
